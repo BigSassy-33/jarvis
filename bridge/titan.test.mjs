@@ -40,6 +40,12 @@ test('TITAN request sends private owner headers and JSON response', async () => 
     assert.equal(result.ok, true)
     assert.equal(result.status, 200)
     assert.deepEqual(result.body, { ok: true })
+})
+
+test('TITAN mission-control source uses an accepted application source', async () => {
+  const source = (await import('node:fs/promises')).readFile
+  const content = await source(new URL('./titan.mjs', import.meta.url), 'utf8')
+  assert.match(content, /source: 'app_intent'/)
   } finally {
     globalThis.fetch = originalFetch
   }
