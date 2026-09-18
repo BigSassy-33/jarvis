@@ -54,6 +54,7 @@ async function request(path, init = {}, raw = process.env) {
     try { body = text ? JSON.parse(text) : {} } catch {}
     return { ok: response.ok, status: response.status, body }
   } catch (error) {
+    void error
     return {
       ok: false,
       status: 503,
