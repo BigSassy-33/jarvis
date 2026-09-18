@@ -67,6 +67,94 @@ async function request(path, init = {}, raw = process.env) {
   }
 }
 
+async function sosRequest(command, idempotencyKey, raw = process.env) {
+  const apiUrl = String(raw.TITAN_SOS_API_URL ?? '').trim().replace(/\/$/, '')
+  const token = String(raw.TITAN_SOS_API_TOKEN ?? '').trim()
+  if (!apiUrl || !token) {
+    return {
+      state: 'interface-required',
+      head: TITAN_HEADS.TITAN_SOS,
+      message: 'TITAN.SOS authenticated interface is not configured.',
+    }
+  }
+
+  let validUrl = false
+  try {
+    const parsed = new URL(apiUrl)
+    validUrl = parsed.protocol === 'https:' || (parsed.protocol === 'http:' && raw.NODE_ENV !== 'production')
+  } catch {}
+
+  if (!validUrl) {
+    return {
+      state: 'rejected',
+      head: TITAN_HEADS.TITAN_SOS,
+      message: 'TITAN.SOS interface requires HTTPS outside development.',
+    }
+  }
+
+  const controller = new AbortController()
+  const timeout = setTimeout(
+    () => controller.abort(),
+    Number(raw.TITAN_SOS_API_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS),
+  )
+  const correlationId = crypto.randomUUID()
+
+  try {
+    const response = await fetch(`${apiUrl}/v1/cross-head/requests`, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+        authorization: `Bearer ${token}`,
+        'x-correlation-id': correlationId,
+        'x-titan-source-head': TITAN_HEADS.JARVIS,
+        'x-titan-target-head': TITAN_HEADS.TITAN_SOS,
+        'idempotency-key': idempotencyKey,
+      },
+      body: JSON.stringify({
+        sourceHead: TITAN_HEADS.JARVIS,
+        targetHead: TITAN_HEADS.TITAN_SOS,
+        idempotencyKey,
+        command,
+        capability: 'route_to_head',
+      }),
+    })
+    const bodyText = await response.text()
+    let body = {}
+    try { body = bodyText ? JSON.parse(bodyText) : {} } catch {}
+
+    if (!response.ok) {
+      return {
+        state: response.status === 503 ? 'unavailable' : 'rejected',
+        head: TITAN_HEADS.TITAN_SOS,
+        status: response.status,
+        message: body?.error?.message ?? body?.error ?? 'TITAN.SOS rejected the cross-head request.',
+        correlationId: body?.correlationId ?? correlationId,
+      }
+    }
+
+    return {
+      state: body?.state ?? 'queued',
+      head: TITAN_HEADS.TITAN_SOS,
+      requestId: body?.requestId ?? body?.request?.id ?? null,
+      approvalRequired: body?.approvalRequired ?? true,
+      correlationId: body?.correlationId ?? correlationId,
+    }
+  } catch (error) {
+    return {
+      state: 'unavailable',
+      head: TITAN_HEADS.TITAN_SOS,
+      message: error?.name === 'AbortError'
+        ? 'TITAN.SOS interface request timed out'
+        : 'TITAN.SOS interface could not be reached',
+      correlationId,
+    }
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
 const headRouter = createHeadRouter({
   titanRequest: async ({ command, idempotencyKey }) => {
     const result = await request('/v1/mission-control/commands', {
@@ -77,6 +165,7 @@ const headRouter = createHeadRouter({
     if (!result.ok) return { state: result.status === 503 ? 'unavailable' : 'rejected', head: TITAN_HEADS.TITAN, status: result.status, message: result.body?.error?.message ?? result.error ?? 'TITAN did not accept the command', correlationId: result.body?.correlationId ?? null }
     return { state: 'queued', head: TITAN_HEADS.TITAN, executionId: result.body?.execution?.id ?? null, executionStatus: result.body?.execution?.status ?? null, correlationId: result.body?.correlationId ?? null }
   },
+  sosRequest: ({ command, idempotencyKey }) => sosRequest(command, idempotencyKey),
 })
 
 const headCommandSchema = {
