@@ -107,6 +107,57 @@
         "TITAN_EXECUTIVE_VOICE_ID",
         "TITAN_ALERT_VOICE_ID"
       ]
+    },
+    {
+      "id": "n8n",
+      "role": "workflow-automation-alternative",
+      "protocol": "mcp-http",
+      "required": false,
+      "env": [
+        "TITAN_N8N_URL",
+        "TITAN_N8N_MCP_URL",
+        "TITAN_N8N_API_KEY"
+      ]
+    },
+    {
+      "id": "comfyui",
+      "role": "image-generation-workflow-engine",
+      "protocol": "http-api",
+      "required": false,
+      "env": [
+        "TITAN_COMFYUI_URL",
+        "TITAN_COMFYUI_API_KEY"
+      ]
+    },
+    {
+      "id": "dify",
+      "role": "agentic-workflow-and-rag-platform",
+      "protocol": "http-api-mcp",
+      "required": false,
+      "env": [
+        "TITAN_DIFY_URL",
+        "TITAN_DIFY_API_KEY"
+      ]
+    },
+    {
+      "id": "vane",
+      "role": "self-hosted-search-and-rag-engine",
+      "protocol": "http-api",
+      "required": false,
+      "env": [
+        "TITAN_VANE_URL",
+        "TITAN_VANE_API_KEY"
+      ]
+    },
+    {
+      "id": "librechat",
+      "role": "multi-provider-ai-workspace",
+      "protocol": "http-api",
+      "required": false,
+      "env": [
+        "TITAN_LIBRECHAT_URL",
+        "TITAN_LIBRECHAT_API_KEY"
+      ]
     }
   ]
 }
