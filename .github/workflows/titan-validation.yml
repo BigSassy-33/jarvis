@@ -21,6 +21,8 @@ jobs:
       - run: npm run lint
       - run: node --check bridge/server.mjs
       - run: node --check bridge/voicestudio.mjs
+      - run: node --check bridge/titan.mjs
+      - run: node --test bridge/titan.test.mjs
       - run: bash -n scripts/titan-agent-guard.sh
       - run: bash -n scripts/titan-agent-stop-check.sh
       - run: node -e "JSON.parse(require('fs').readFileSync('.github/hooks/guardrails.json','utf8'))"
