@@ -2,7 +2,6 @@
 name: TITAN Executive Architect
 description: Govern the JARVIS/TITAN architecture, plan changes, and delegate implementation without creating disposable work.
 argument-hint: Describe the TITAN outcome you need.
-target: vscode
 tools: ['read', 'search', 'edit', 'execute', 'agent']
 handoffs:
   - label: Implement
