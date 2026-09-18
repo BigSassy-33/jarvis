@@ -124,7 +124,7 @@ export function titanServer() {
             body: JSON.stringify({
               idempotencyKey: key,
               command,
-              source: 'jarvis',
+              source: 'app_intent',
             }),
           })
 
