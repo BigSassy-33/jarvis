@@ -113,7 +113,7 @@ function modelId() {
   return process.env.TITAN_VOICESTUDIO_MODEL || 'tts-1'
 }
 
-export async function tryVoiceStudioSpeech(req, res, cors, role = 'executive') {
+export async function tryVoiceStudioSpeech(req, res, cors) {
   const bodyChunks = []
   let size = 0
   for await (const chunk of req) {
