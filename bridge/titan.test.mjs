@@ -50,3 +50,11 @@ test('TITAN mission-control source uses an accepted application source', async (
   const content = await source(new URL('./titan.mjs', import.meta.url), 'utf8')
   assert.match(content, /source: 'app_intent'/)
 })
+
+test('TITAN execution status uses the authenticated execution endpoint', async () => {
+  const source = (await import('node:fs/promises')).readFile
+  const content = await source(new URL('./titan.mjs', import.meta.url), 'utf8')
+  assert.match(content, /titan_execution_status/)
+  assert.match(content, /agent-executions.*encodeURIComponent\(executionId\)/s)
+  assert.match(content, /Retrieve the status of a TITAN execution/)
+})
