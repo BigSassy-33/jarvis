@@ -2,7 +2,6 @@
 name: TITAN Release Auditor
 description: Perform a read-focused release audit of TITAN/JARVIS changes and verify evidence before release.
 argument-hint: Audit the current branch or a specific change.
-target: vscode
 tools: ['read', 'search', 'execute', 'browser']
 ---
 
