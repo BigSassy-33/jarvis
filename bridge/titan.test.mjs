@@ -58,3 +58,15 @@ test('TITAN execution status uses the authenticated execution endpoint', async (
   assert.match(content, /agent-executions.*encodeURIComponent\(executionId\)/s)
   assert.match(content, /Retrieve the status of a TITAN execution/)
 })
+
+
+test('TITAN.SOS cross-head adapter requires authenticated configuration', async () => {
+  const source = (await import('node:fs/promises')).readFile
+  const content = await source(new URL('./titan.mjs', import.meta.url), 'utf8')
+  assert.match(content, /TITAN_SOS_API_URL/)
+  assert.match(content, /TITAN_SOS_API_TOKEN/)
+  assert.match(content, /v1\/cross-head\/requests/)
+  assert.match(content, /x-titan-source-head/)
+  assert.match(content, /x-titan-target-head/)
+  assert.match(content, /idempotency-key/)
+})
