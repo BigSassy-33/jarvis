@@ -27,6 +27,8 @@ import { readFile, realpath, stat } from 'node:fs/promises'
 import { isAbsolute, join, relative, resolve as resolvePath } from 'node:path'
 import { openRemote, proxyError, vetTarget, PROXY_UA } from './net.mjs'
 import { probeUrl, renderPage } from './page.mjs'
+import { resolveVoiceProvider, tryVoiceStudioSpeech, tryVoiceStudioTranscription, voiceStudioAvailable } from './voicestudio.mjs'
+import { titanServer } from './titan.mjs'
 
 const PORT = Number(process.env.JARVIS_BRIDGE_PORT ?? 8787)
 
@@ -457,7 +459,19 @@ function elevenKey() {
   }
 }
 
-const VOICE_ID = process.env.JARVIS_VOICE_ID ?? 'JBFqnCBsd6RMkjVDRZzb'
+const VOICE_IDS = Object.freeze({
+  executive:
+    process.env.TITAN_EXECUTIVE_VOICE_ID ??
+    process.env.JARVIS_VOICE_ID ??
+    'tVb4QGWh6bdIXHLleu7W',
+  alert:
+    process.env.TITAN_ALERT_VOICE_ID ??
+    'CwhRBWXzGAHq8TQ4Fs17',
+})
+
+function voiceIdFor(role) {
+  return role === 'alert' ? VOICE_IDS.alert : VOICE_IDS.executive
+}
 
 /**
  * Where /file is permitted to read from, and how big a read may get.
@@ -677,14 +691,23 @@ const handleRequest = async (req, res) => {
   }
 
   if (req.method === 'GET' && req.url === '/health') {
-    // The browser reads this once at boot to decide which voice engine to use.
-    // Both premium paths ride the same ElevenLabs key, so both flags track it:
-    // with a key the app transcribes with Scribe and speaks with ElevenLabs;
-    // without one it falls back to the browser's own recogniser and voice, so a
-    // student with nothing configured still has a working assistant.
+    // VoiceStudio is the local-first provider. ElevenLabs remains the cloud
+    // fallback. The browser only needs the capability result; provider details
+    // stay on the bridge.
     const eleven = Boolean(elevenKey())
+    const provider = await resolveVoiceProvider(eleven)
+    const voiceStudio = await voiceStudioAvailable()
     res.writeHead(200, { ...cors, 'content-type': 'application/json' })
-    return res.end(JSON.stringify({ ok: true, tts: eleven, stt: eleven }))
+    return res.end(
+      JSON.stringify({
+        ok: true,
+        tts: provider !== 'none',
+        stt: provider !== 'none',
+        provider,
+        voicestudio: voiceStudio,
+        elevenlabs: eleven,
+      }),
+    )
   }
 
   // Serve local image files to the page. Screenshots and generated art land on
@@ -807,6 +830,11 @@ const handleRequest = async (req, res) => {
   }
 
   if (req.method === 'POST' && req.url === '/tts') {
+    const provider = await resolveVoiceProvider(Boolean(elevenKey()))
+    if (provider === 'voicestudio') {
+      return tryVoiceStudioSpeech(req, res, cors)
+    }
+
     const key = elevenKey()
     if (!key) {
       res.writeHead(503, cors)
@@ -831,8 +859,10 @@ const handleRequest = async (req, res) => {
     // Inside a try: this handler is async with nothing catching its rejection,
     // so a malformed body used to take the entire bridge down with it.
     let text
+    let role = 'executive'
     try {
-      ;({ text } = JSON.parse(body || '{}'))
+      ;({ text, role } = JSON.parse(body || '{}'))
+      if (role !== 'executive' && role !== 'alert') role = 'executive'
     } catch {
       res.writeHead(400, cors)
       return res.end('bad json')
@@ -843,7 +873,7 @@ const handleRequest = async (req, res) => {
     }
     try {
       const upstream = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}/stream` +
+        `https://api.elevenlabs.io/v1/text-to-speech/${voiceIdFor(role)}/stream` +
           // 22kHz mono is half the bytes of 44kHz and indistinguishable through
           // a laptop speaker; optimize_streaming_latency=3 trades a little
           // prosody for a much earlier first byte.
@@ -892,6 +922,11 @@ const handleRequest = async (req, res) => {
   // speaking at all is done locally with voice-activity detection, which never
   // touches this endpoint; this is only for the words.
   if (req.method === 'POST' && req.url === '/stt') {
+    const provider = await resolveVoiceProvider(Boolean(elevenKey()))
+    if (provider === 'voicestudio') {
+      return tryVoiceStudioTranscription(req, res, cors)
+    }
+
     const key = elevenKey()
     if (!key) {
       res.writeHead(503, cors)
@@ -1214,6 +1249,8 @@ wss.on('connection', (socket) => {
         jarvis_chrome: chromeServer({ allowWrites: ALLOW_WRITES }),
         // The camera, which unlike everything else here has to ask and wait.
         jarvis_eyes: visionServer(ask),
+        // TITAN Commerce OS is the durable business/runtime layer. JARVIS remains the executive face and voice; this server is the narrow authenticated bridge between them.
+        titan: titanServer(),
       },
       // A plain system prompt, not the claude_code preset. The preset is
       // tuned for a coding agent — verbose, file-oriented, and a large chunk

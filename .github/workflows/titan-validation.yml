@@ -1,0 +1,32 @@
+name: TITAN Jarvis validation
+
+on:
+  push:
+    branches:
+      - feature/titan-ai-stack
+      - feature/voicestudio-integration
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: node --check bridge/server.mjs
+      - run: node --check bridge/voicestudio.mjs
+      - run: node --check bridge/titan.mjs
+      - run: node --check bridge/head-router.mjs
+      - run: node --check bridge/workforce.mjs
+      - run: node --test bridge/titan.test.mjs bridge/head-router.test.mjs bridge/workforce.test.mjs
+      - run: bash -n scripts/titan-agent-guard.sh
+      - run: bash -n scripts/titan-agent-stop-check.sh
+      - run: node -e "JSON.parse(require('fs').readFileSync('.github/hooks/guardrails.json','utf8'))"
+      - run: '! grep -R -n "^target:" .github/agents'
+      - run: npm run build

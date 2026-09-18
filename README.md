@@ -245,6 +245,10 @@ Everything is optional in bridge mode. Frontend settings live in `.env.local`
 | `VITE_USE_ELEVENLABS` | Force the ElevenLabs voice on |
 | `VITE_ANTHROPIC_API_KEY` | Direct mode only |
 
+### TITAN integration
+
+The bridge can route executive commands to TITAN and can use an authenticated cross-head boundary for TITAN.SOS. Production SOS requests require TITAN_SOS_API_URL and TITAN_SOS_API_TOKEN; the adapter sends explicit source/target head identifiers, a correlation ID, and an idempotency key. The bridge never reports an SOS request as successful when the boundary is unconfigured or unreachable.
+
 ### Adding an ElevenLabs key
 
 You do not have to touch a flag. Either:

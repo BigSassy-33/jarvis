@@ -201,9 +201,17 @@ export default function App() {
       if (stale()) return
       console.error(err)
       sfx.play('error')
-      store
-        .getState()
-        .setError(err instanceof Error ? err.message : 'Something went wrong.')
+      const message = err instanceof Error ? err.message : 'Something went wrong.'
+      store.getState().setError(message)
+
+      // Errors are the one conversational path that should cut through with
+      // the dedicated TITAN Alert voice. The existing speaker is cancelled
+      // first so the alert cannot overlap the failed response.
+      speaker.current?.cancel()
+      const alertSpeaker = createSpeaker('alert')
+      speaker.current = alertSpeaker
+      alertSpeaker.say("I'm afraid the request failed, sir.")
+      await alertSpeaker.end()
     } finally {
       if (!stale()) {
         speaker.current = null
