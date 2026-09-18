@@ -28,6 +28,7 @@ import { isAbsolute, join, relative, resolve as resolvePath } from 'node:path'
 import { openRemote, proxyError, vetTarget, PROXY_UA } from './net.mjs'
 import { probeUrl, renderPage } from './page.mjs'
 import { resolveVoiceProvider, tryVoiceStudioSpeech, tryVoiceStudioTranscription, voiceStudioAvailable } from './voicestudio.mjs'
+import { titanServer } from './titan.mjs'
 
 const PORT = Number(process.env.JARVIS_BRIDGE_PORT ?? 8787)
 
@@ -1248,7 +1249,7 @@ wss.on('connection', (socket) => {
         jarvis_chrome: chromeServer({ allowWrites: ALLOW_WRITES }),
         // The camera, which unlike everything else here has to ask and wait.
         jarvis_eyes: visionServer(ask),
-      },
+        // TITAN Commerce OS is the durable business/runtime layer. JARVIS remains the executive face and voice; this server is the narrow authenticated bridge between them.\n        titan: titanServer(),\n      },
       // A plain system prompt, not the claude_code preset. The preset is
       // tuned for a coding agent — verbose, file-oriented, and a large chunk
       // of input tokens on every turn. Replacing it makes the persona stick,
