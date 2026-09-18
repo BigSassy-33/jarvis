@@ -27,6 +27,8 @@ import { caps } from './capabilities'
  * emptied.
  */
 
+export type VoiceRole = 'executive' | 'alert'
+
 type Speaker = {
   /** Feed streamed text in. Complete sentences are spoken as they appear. */
   push: (delta: string) => void
@@ -335,7 +337,7 @@ type Item = {
   audio?: Promise<string | null> | null
 }
 
-export function createSpeaker(): Speaker {
+export function createSpeaker(role: VoiceRole = 'executive'): Speaker {
   const queue: Item[] = []
   let buffer = ''
   let cancelled = false
@@ -385,7 +387,7 @@ export function createSpeaker(): Speaker {
       // ElevenLabs, which makes the one field naming the engine useless
       // exactly when you are trying to work out which engine is at fault.
       diag.engine = 'elevenlabs'
-      return fetchCloudAudio(text).catch(() => null)
+      return fetchCloudAudio(text, role).catch(() => null)
     }
     if (TTS_ENGINE === 'kokoro' && !kokoro.isUnavailable()) {
       diag.engine = 'kokoro'
@@ -738,13 +740,13 @@ export function createSpeaker(): Speaker {
 
 /** Only used when USE_ELEVENLABS is on. Bridge proxy first (it already holds
  *  the key), then a direct key, then null to fall back to the native voice. */
-async function fetchCloudAudio(text: string): Promise<string | null> {
+async function fetchCloudAudio(text: string, role: VoiceRole = 'executive'): Promise<string | null> {
   if (BACKEND === 'bridge') {
     try {
       const res = await fetch(`${BRIDGE_HTTP_URL}/tts`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, role }),
       })
       if (res.ok) return URL.createObjectURL(await res.blob())
     } catch {
@@ -755,7 +757,7 @@ async function fetchCloudAudio(text: string): Promise<string | null> {
   if (env.elevenKey) {
     try {
       const res = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${env.elevenVoiceId}/stream` +
+        `https://api.elevenlabs.io/v1/text-to-speech/${role === 'alert' ? env.elevenAlertVoiceId : env.elevenExecutiveVoiceId}/stream` +
           `?output_format=mp3_22050_32&optimize_streaming_latency=3`,
         {
           method: 'POST',
