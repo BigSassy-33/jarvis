@@ -1,0 +1,22 @@
+name: TITAN Jarvis validation
+
+on:
+  push:
+    branches:
+      - feature/titan-ai-stack
+      - feature/voicestudio-integration
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node --check bridge/server.mjs
+      - run: node --check bridge/voicestudio.mjs
+      - run: npm run build
