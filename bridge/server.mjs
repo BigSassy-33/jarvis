@@ -457,7 +457,19 @@ function elevenKey() {
   }
 }
 
-const VOICE_ID = process.env.JARVIS_VOICE_ID ?? 'JBFqnCBsd6RMkjVDRZzb'
+const VOICE_IDS = Object.freeze({
+  executive:
+    process.env.TITAN_EXECUTIVE_VOICE_ID ??
+    process.env.JARVIS_VOICE_ID ??
+    'tVb4QGWh6bdIXHLleu7W',
+  alert:
+    process.env.TITAN_ALERT_VOICE_ID ??
+    'CwhRBWXzGAHq8TQ4Fs17',
+})
+
+function voiceIdFor(role) {
+  return role === 'alert' ? VOICE_IDS.alert : VOICE_IDS.executive
+}
 
 /**
  * Where /file is permitted to read from, and how big a read may get.
@@ -831,8 +843,10 @@ const handleRequest = async (req, res) => {
     // Inside a try: this handler is async with nothing catching its rejection,
     // so a malformed body used to take the entire bridge down with it.
     let text
+    let role = 'executive'
     try {
-      ;({ text } = JSON.parse(body || '{}'))
+      ;({ text, role } = JSON.parse(body || '{}'))
+      if (role !== 'executive' && role !== 'alert') role = 'executive'
     } catch {
       res.writeHead(400, cors)
       return res.end('bad json')
@@ -843,7 +857,7 @@ const handleRequest = async (req, res) => {
     }
     try {
       const upstream = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}/stream` +
+        `https://api.elevenlabs.io/v1/text-to-speech/${voiceIdFor(role)}/stream` +
           // 22kHz mono is half the bytes of 44kHz and indistinguishable through
           // a laptop speaker; optimize_streaming_latency=3 trades a little
           // prosody for a much earlier first byte.
