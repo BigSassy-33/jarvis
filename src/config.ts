@@ -131,8 +131,13 @@ export const KOKORO_VOICE = choice(
 export const env = {
   anthropicKey: str(import.meta.env.VITE_ANTHROPIC_API_KEY) ?? '',
   elevenKey: str(import.meta.env.VITE_ELEVENLABS_API_KEY) ?? '',
-  elevenVoiceId:
-    str(import.meta.env.VITE_ELEVENLABS_VOICE_ID) ?? 'JBFqnCBsd6RMkjVDRZzb',
+  elevenExecutiveVoiceId:
+    str(import.meta.env.VITE_ELEVENLABS_EXECUTIVE_VOICE_ID) ??
+    str(import.meta.env.VITE_ELEVENLABS_VOICE_ID) ??
+    'tVb4QGWh6bdIXHLleu7W',
+  elevenAlertVoiceId:
+    str(import.meta.env.VITE_ELEVENLABS_ALERT_VOICE_ID) ??
+    'CwhRBWXzGAHq8TQ4Fs17',
   porcupineKey: str(import.meta.env.VITE_PICOVOICE_ACCESS_KEY) ?? '',
 }
 
