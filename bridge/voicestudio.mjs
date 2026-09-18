@@ -127,8 +127,10 @@ export async function tryVoiceStudioSpeech(req, res, cors, role = 'executive') {
   }
 
   let text
+  let role = 'executive'
   try {
-    ;({ text } = JSON.parse(Buffer.concat(bodyChunks).toString('utf8') || '{}')
+    ;({ text, role } = JSON.parse(Buffer.concat(bodyChunks).toString('utf8') || '{}'))
+    if (role !== 'executive' && role !== 'alert') role = 'executive'
   } catch {
     res.writeHead(400, cors)
     res.end('bad json')
