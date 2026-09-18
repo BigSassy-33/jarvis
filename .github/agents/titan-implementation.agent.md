@@ -2,7 +2,6 @@
 name: TITAN Implementation Engineer
 description: Implement approved TITAN/JARVIS changes with focused edits and deterministic validation.
 argument-hint: Describe the implementation to make.
-target: vscode
 tools: ['read', 'search', 'edit', 'execute', 'browser']
 handoffs:
   - label: Audit
