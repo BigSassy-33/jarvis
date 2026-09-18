@@ -67,10 +67,18 @@ async function request(path, init = {}, raw = process.env) {
   }
 }
 
-async function sosRequest(command, idempotencyKey, raw = process.env) {
+async function resolveSosCapability(command) {
+  const text = String(command ?? '').toLowerCase();
+  if (/\\b(publish|deploy|production|launch|release|apply|execute)\\b/.test(text)) return 'sos:request_production';
+  if (/\\b(creative|media|content|design|story|video|image)\\b/.test(text)) return 'sos:creative';
+  return 'sos:research';
+}
+
+function sosRequest(command, idempotencyKey, raw = process.env) {
   const apiUrl = String(raw.TITAN_SOS_API_URL ?? '').trim().replace(/\/$/, '')
   const token = String(raw.TITAN_SOS_API_TOKEN ?? '').trim()
-  if (!apiUrl || !token) {
+  const organizationId = String(raw.TITAN_SOS_ORGANIZATION_ID ?? '').trim()
+  if (!apiUrl || !token || !organizationId) {
     return {
       state: 'interface-required',
       head: TITAN_HEADS.TITAN_SOS,
@@ -113,11 +121,12 @@ async function sosRequest(command, idempotencyKey, raw = process.env) {
         'idempotency-key': idempotencyKey,
       },
       body: JSON.stringify({
+        organizationId,
         sourceHead: TITAN_HEADS.JARVIS,
         targetHead: TITAN_HEADS.TITAN_SOS,
         idempotencyKey,
         command,
-        capability: 'route_to_head',
+        capability: resolveSosCapability(command),
       }),
     })
     const bodyText = await response.text()
