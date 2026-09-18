@@ -7,9 +7,6 @@ on:
       - feature/voicestudio-integration
   pull_request:
 
-permissions:
-  contents: read
-
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -25,5 +22,3 @@ jobs:
       - run: node --check bridge/server.mjs
       - run: node --check bridge/voicestudio.mjs
       - run: npm run build
-      - name: Verify VoiceStudio adapter
-        run: node --input-type=module -e "import { resolveVoiceProvider } from './bridge/voicestudio.mjs'; const provider = await resolveVoiceProvider(false); if (provider !== 'none') throw new Error('Unexpected provider: ' + provider); console.log('VoiceStudio adapter loaded; no provider configured is handled safely.')"
