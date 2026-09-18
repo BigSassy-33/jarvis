@@ -1,0 +1,6 @@
+{
+  "chat.useAgentsMdFile": true,
+  "chat.useClaudeMdFile": true,
+  "chat.useCustomAgentHooks": true,
+  "chat.useCustomizationsInParentRepositories": true
+}
