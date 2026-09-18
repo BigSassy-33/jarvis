@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "type": "command",
+        "command": "bash scripts/titan-agent-guard.sh",
+        "timeout": 5
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "bash scripts/titan-agent-stop-check.sh",
+        "timeout": 120
+      }
+    ]
+  }
+}
