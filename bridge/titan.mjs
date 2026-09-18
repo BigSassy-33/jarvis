@@ -2,6 +2,7 @@ import { createSdkMcpServer, tool } from '@anthropic-ai/claude-agent-sdk'
 import { z } from 'zod'
 import crypto from 'node:crypto'
 import { createHeadRouter, TITAN_HEADS } from './head-router.mjs'
+import { submitObjective, startRun } from './workforce.mjs'
 
 const DEFAULT_TIMEOUT_MS = 15_000
 
@@ -138,6 +139,24 @@ export function titanServer() {
         async ({ command, head, idempotencyKey }) => {
           const result = await headRouter.route({ command, head, idempotencyKey })
           return { isError: result.state === 'invalid' || result.state === 'unavailable' || result.state === 'interface-required', content: [{ type: 'text', text: JSON.stringify(result) }] }
+        },
+      ),
+      tool(
+        'workforce_objective',
+        'Submit an objective to TITAN Workforce. It is reported as accepted only after the authenticated Workforce API confirms creation.',
+        { objective: z.string().min(1).max(5_000) },
+        async ({ objective }) => {
+          const result = await submitObjective(objective)
+          return { isError: result.state !== 'accepted', content: [{ type: 'text', text: JSON.stringify(result) }] }
+        },
+      ),
+      tool(
+        'workforce_run',
+        'Start a TITAN Workforce run for an existing objective ID. It is reported as accepted only after Workforce confirms creation.',
+        { objectiveId: z.string().uuid() },
+        async ({ objectiveId }) => {
+          const result = await startRun(objectiveId)
+          return { isError: result.state !== 'accepted', content: [{ type: 'text', text: JSON.stringify(result) }] }
         },
       ),
       tool(
