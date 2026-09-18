@@ -74,7 +74,7 @@ function resolveSosCapability(command) {
   return 'sos:research';
 }
 
-function sosRequest(command, idempotencyKey, raw = process.env) {
+async function sosRequest(command, idempotencyKey, raw = process.env) {
   const apiUrl = String(raw.TITAN_SOS_API_URL ?? '').trim().replace(/\/$/, '')
   const token = String(raw.TITAN_SOS_API_TOKEN ?? '').trim()
   const organizationId = String(raw.TITAN_SOS_ORGANIZATION_ID ?? '').trim()
