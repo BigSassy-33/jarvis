@@ -61,3 +61,29 @@ VoiceStudio remains the local-first voice provider already implemented on `featu
 - `orchestration` → JARVIS bridge
 
 This keeps TITAN modular: replacing a worker does not require rebuilding the executive/orchestration layer.
+
+| n8n | Workflow automation alternative / broad integration layer | MCP / HTTPS |
+| ComfyUI | Image-generation workflow engine | HTTP API / separate service |
+| Dify | Agentic workflow, RAG, and AI application layer | API / MCP / separate service |
+| Vane | Self-hosted search and RAG/retrieval layer | HTTP API / separate service |
+| LibreChat | Multi-provider AI workspace and agent interface | API / separate service |
+
+### Additional capability boundaries
+
+**n8n** is an additional automation engine alongside Activepieces. TITAN should treat them as interchangeable workflow backends rather than running both for the same job.
+
+**ComfyUI** is a specialized visual generation workflow engine. TITAN should submit generation workflows/jobs and consume resulting assets rather than importing the ComfyUI application source.
+
+**Dify** is an application/agent workflow layer suitable for RAG, tool use, and AI application orchestration. It remains a service behind TITAN rather than becoming TITAN's core orchestrator.
+
+**Vane** is a retrieval/search capability. TITAN can use it when a self-hosted search/RAG path is explicitly configured.
+
+**LibreChat** is an optional multi-provider AI workspace/agent interface. TITAN may use it as an operator-facing AI surface or provider gateway, but it does not replace the JARVIS executive shell.
+
+## Expanded capability routing
+
+- `workflow` → Activepieces or n8n
+- `image generation workflows` → ComfyUI
+- `agentic apps / RAG workflows` → Dify
+- `web/search/retrieval` → Vane
+- `multi-provider chat workspace` → LibreChat
