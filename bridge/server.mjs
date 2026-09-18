@@ -29,7 +29,6 @@ import { openRemote, proxyError, vetTarget, PROXY_UA } from './net.mjs'
 import { probeUrl, renderPage } from './page.mjs'
 import { resolveVoiceProvider, tryVoiceStudioSpeech, tryVoiceStudioTranscription, voiceStudioAvailable } from './voicestudio.mjs'
 import { titanServer } from './titan.mjs'
-import { executeWorkforceObjective } from './workforce.mjs'
 
 const PORT = Number(process.env.JARVIS_BRIDGE_PORT ?? 8787)
 
@@ -1252,7 +1251,6 @@ wss.on('connection', (socket) => {
         jarvis_eyes: visionServer(ask),
         // TITAN Commerce OS is the durable business/runtime layer. JARVIS remains the executive face and voice; this server is the narrow authenticated bridge between them.
         titan: titanServer(),
-        workforce: { tools: { execute_workforce_objective: async (args) => executeWorkforceObjective(args?.objective) } },
       },
       // A plain system prompt, not the claude_code preset. The preset is
       // tuned for a coding agent — verbose, file-oriented, and a large chunk
