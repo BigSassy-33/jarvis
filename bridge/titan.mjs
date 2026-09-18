@@ -142,6 +142,41 @@ export function titanServer() {
         },
       ),
       tool(
+        'titan_execution_status',
+        'Retrieve the status of a TITAN execution previously returned by titan_command or titan_route. Never infer completion from queue acceptance.',
+        { executionId: z.string().min(1).max(128) },
+        async ({ executionId }) => {
+          const result = await request(`/agent-executions/${encodeURIComponent(executionId)}`, { method: 'GET' })
+          if (!result.ok) {
+            return {
+              isError: true,
+              content: [{
+                type: 'text',
+                text: JSON.stringify({
+                  state: result.status === 503 ? 'unavailable' : 'rejected',
+                  status: result.status,
+                  message: result.body?.error?.message ?? result.error ?? 'TITAN execution status could not be retrieved',
+                  correlationId: result.body?.error?.correlationId ?? result.body?.correlationId ?? result.correlationId ?? null,
+                }),
+              }],
+            }
+          }
+
+          const execution = result.body?.execution ?? result.body?.data ?? result.body
+          return {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                state: execution?.status ?? 'unknown',
+                executionId: execution?.id ?? executionId,
+                execution,
+                correlationId: result.body?.correlationId ?? result.correlationId ?? null,
+              }),
+            }],
+          }
+        },
+      ),
+      tool(
         'workforce_execute',
         'Submit an objective to TITAN Workforce and start its run. It is reported as accepted only after both authenticated API operations confirm creation.',
         { objective: z.string().min(1).max(5_000) },
