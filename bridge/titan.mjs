@@ -1,6 +1,7 @@
 import { createSdkMcpServer, tool } from '@anthropic-ai/claude-agent-sdk'
 import { z } from 'zod'
 import crypto from 'node:crypto'
+import { createHeadRouter, TITAN_HEADS } from './head-router.mjs'
 
 const DEFAULT_TIMEOUT_MS = 15_000
 
@@ -65,6 +66,24 @@ async function request(path, init = {}, raw = process.env) {
   }
 }
 
+const headRouter = createHeadRouter({
+  titanRequest: async ({ command, idempotencyKey }) => {
+    const result = await request('/v1/mission-control/commands', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ idempotencyKey, command, source: 'app_intent' }),
+    })
+    if (!result.ok) return { state: result.status === 503 ? 'unavailable' : 'rejected', head: TITAN_HEADS.TITAN, status: result.status, message: result.body?.error?.message ?? result.error ?? 'TITAN did not accept the command', correlationId: result.body?.correlationId ?? null }
+    return { state: 'queued', head: TITAN_HEADS.TITAN, executionId: result.body?.execution?.id ?? null, executionStatus: result.body?.execution?.status ?? null, correlationId: result.body?.correlationId ?? null }
+  },
+})
+
+const headCommandSchema = {
+  command: z.string().min(1).max(10_000),
+  head: z.enum(['jarvis', 'titan', 'titan_sos']).optional(),
+  idempotencyKey: z.string().min(1).max(128).optional(),
+}
+
 const commandSchema = {
   command: z.string().min(1).max(10_000).describe('The business command to submit to TITAN Mission Control.'),
   idempotencyKey: z.string().min(1).max(128).optional().describe('Optional stable key for safe replay.'),
@@ -110,6 +129,15 @@ export function titanServer() {
               }),
             }],
           }
+        },
+      ),
+      tool(
+        'titan_route',
+        'Route an executive command to JARVIS, TITAN, or TITAN.SOS. TITAN.SOS execution is never claimed unless its authenticated cross-head interface is actually configured.',
+        headCommandSchema,
+        async ({ command, head, idempotencyKey }) => {
+          const result = await headRouter.route({ command, head, idempotencyKey })
+          return { isError: result.state === 'invalid' || result.state === 'unavailable' || result.state === 'interface-required', content: [{ type: 'text', text: JSON.stringify(result) }] }
         },
       ),
       tool(
