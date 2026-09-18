@@ -16,6 +16,11 @@ This branch integrates the selected open-source projects as external capabilitie
 | Open-Generative-AI | Image/video/cinema/lip-sync generation worker | Separate app/service boundary |
 | VoiceStudio | Local voice/STT/TTS provider | OpenAI-compatible HTTP API |
 | ElevenLabs | Cloud Executive/Alert voice fallback | Server-side API |
+| n8n | Workflow automation alternative / broad integration layer | MCP / HTTPS |
+| ComfyUI | Image-generation workflow engine | HTTP API / separate service |
+| Dify | Agentic workflow, RAG, and AI application layer | API / MCP / separate service |
+| Vane | Self-hosted search and RAG/retrieval layer | HTTP API / separate service |
+| LibreChat | Multi-provider AI workspace and agent interface | API / separate service |
 
 ## Runtime boundaries
 
@@ -62,13 +67,7 @@ VoiceStudio remains the local-first voice provider already implemented on `featu
 
 This keeps TITAN modular: replacing a worker does not require rebuilding the executive/orchestration layer.
 
-| n8n | Workflow automation alternative / broad integration layer | MCP / HTTPS |
-| ComfyUI | Image-generation workflow engine | HTTP API / separate service |
-| Dify | Agentic workflow, RAG, and AI application layer | API / MCP / separate service |
-| Vane | Self-hosted search and RAG/retrieval layer | HTTP API / separate service |
-| LibreChat | Multi-provider AI workspace and agent interface | API / separate service |
-
-### Additional capability boundaries
+## Additional capability boundaries
 
 **n8n** is an additional automation engine alongside Activepieces. TITAN should treat them as interchangeable workflow backends rather than running both for the same job.
 
