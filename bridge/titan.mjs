@@ -69,8 +69,8 @@ async function request(path, init = {}, raw = process.env) {
 
 function resolveSosCapability(command) {
   const text = String(command ?? '').toLowerCase();
-  if (/\\b(publish|deploy|production|launch|release|apply|execute)\\b/.test(text)) return 'sos:request_production';
-  if (/\\b(creative|media|content|design|story|video|image)\\b/.test(text)) return 'sos:creative';
+  if (/\b(publish|deploy|production|launch|release|apply|execute)\b/.test(text)) return 'sos:request_production';
+  if (/\b(creative|media|content|design|story|video|image)\b/.test(text)) return 'sos:creative';
   return 'sos:research';
 }
 
