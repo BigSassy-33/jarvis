@@ -161,4 +161,4 @@ export function titanServer() {
   })
 }
 
-export { configuration }
+export { configuration, request }
