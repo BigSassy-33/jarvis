@@ -17,6 +17,7 @@
 
 import { WebSocketServer } from 'ws'
 import { query } from '@anthropic-ai/claude-agent-sdk'
+import { titanSosServer } from './titan.mjs'
 import { displayServer } from './panels.mjs'
 import { uiServer } from './ui.mjs'
 import { chromeAvailable, chromeServer } from './chrome.mjs'
@@ -278,6 +279,7 @@ function decideTool(name) {
     // and the real gate is the browser's own camera permission plus an
     // indicator the user can see for as long as it is live.
     if (server === 'jarvis_eyes') return true
+    if (server === 'titan_sos') return ALLOW_WRITES
 
     const tool = mcpToolOf(name)
     if (EFFECTFUL_VERB.test(tool) && !VETO_EXEMPT.has(`${server}__${tool}`)) {
@@ -1214,6 +1216,9 @@ wss.on('connection', (socket) => {
         jarvis_chrome: chromeServer({ allowWrites: ALLOW_WRITES }),
         // The camera, which unlike everything else here has to ask and wait.
         jarvis_eyes: visionServer(ask),
+        // Authenticated JARVIS -> TITAN.SOS cross-head boundary.
+        // The TITAN API remains the authority; this tool only submits governed requests.
+        titan_sos: titanSosServer,
       },
       // A plain system prompt, not the claude_code preset. The preset is
       // tuned for a coding agent — verbose, file-oriented, and a large chunk
